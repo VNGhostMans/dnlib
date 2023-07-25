@@ -69,7 +69,9 @@ namespace dnlib.DotNet.Pdb.Portable {
 				return ReadTypeDefinitionDocuments();
 			if (kind == CustomDebugInfoGuids.EncStateMachineStateMap)
 				return ReadEncStateMachineStateMap();
-			Debug.Fail("Unknown custom debug info guid: " + kind.ToString());
+			if (kind == CustomDebugInfoGuids.PrimaryConstructorInformationBlob)
+				return ReadPrimaryConstructorInformationBlob();
+			Debug.Fail($"Unknown custom debug info guid: {kind}");
 			return new PdbUnknownCustomDebugInfo(kind, reader.ReadRemainingBytes());
 		}
 
@@ -259,6 +261,9 @@ namespace dnlib.DotNet.Pdb.Portable {
 
 			return cdi;
 		}
+
+		PdbCustomDebugInfo ReadPrimaryConstructorInformationBlob() =>
+			new PrimaryConstructorInformationBlobDebugInfo(reader.ReadRemainingBytes());
 
 		Instruction GetInstruction(uint offset) {
 			var instructions = bodyOpt.Instructions;

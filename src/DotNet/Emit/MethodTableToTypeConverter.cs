@@ -27,13 +27,16 @@ namespace dnlib.DotNet.Emit {
 
 		static MethodTableToTypeConverter() {
 			if (ptrFieldInfo is null) {
-#if NETSTANDARD
+#if NETSTANDARD || NETCOREAPP
 				var asmb = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("DynAsm"), AssemblyBuilderAccess.Run);
 #else
 				var asmb = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("DynAsm"), AssemblyBuilderAccess.Run);
 #endif
 				moduleBuilder = asmb.DefineDynamicModule("DynMod");
 			}
+
+			// In .NET 8+, ILGenerator is an abstract class and the actual ILGenerator implementation is found in RuntimeILGenerator.
+			localSignatureFieldInfo ??= Type.GetType("System.Reflection.Emit.RuntimeILGenerator")?.GetField("m_localSignature", BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 		}
 
 		/// <summary>
@@ -118,7 +121,7 @@ namespace dnlib.DotNet.Emit {
 			return Type.GetTypeFromHandle((RuntimeTypeHandle)th);
 		}
 
-		static string GetNextTypeName() => "Type" + numNewTypes++.ToString();
+		static string GetNextTypeName() => $"Type{numNewTypes++}";
 
 		static byte[] GetLocalSignature(IntPtr mtAddr) {
 			ulong mtValue = (ulong)mtAddr.ToInt64();
